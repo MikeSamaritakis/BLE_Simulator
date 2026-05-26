@@ -2,27 +2,35 @@
 
 ## Abstract
 
-This application implements an Android-based simulator for Bluetooth Low Energy iBeacon advertisements. It was developed to support experimental work in which a physical beacon was unavailable or where configurable beacon identities were required for repeated thesis measurements. The simulator provides an editable interface for the main iBeacon parameters and records operational events through structured Logcat output.
+This application implements an Android based simulator for Bluetooth Low Energy iBeacon advertisements. It was developed to support Bachelor's thesis experimentation by providing configurable BLE beacon identity parameters during testing, demonstration, and validation activities.
+
+## Role in Thesis Methodology
+
+The main thesis project is separate from this repository. The main thesis project is OIPASFT. This repository was used only as a helper tool. The BLE Simulator provided controlled iBeacon advertisement inputs for testing, demonstration, and validation. The simulator is not the primary thesis contribution, and it should not be treated as a calibrated RF reference instrument.
+
+In this context, the simulator is intended to reproduce beacon identity data, such as UUID, major, minor, and measured power fields, rather than to provide laboratory grade radio frequency measurements. Android smartphones differ in Bluetooth chipset, antenna design, firmware behaviour, transmission power control, and operating system handling of BLE advertising. As a result, the emitted radio signal and the RSSI observed by a scanner may vary between devices and environments even when the same iBeacon parameters are configured. The tool is therefore suitable for validating detection logic and repeatable beacon identity configuration, but it is not suitable for deriving calibrated propagation models, comparing absolute transmission power, or treating RSSI values as measurements from a certified RF source.
+
+The BLE Simulator helper tool was executed on Android smartphones used as simulated beacon advertisers. The Samsung Galaxy A15 and Xiaomi Redmi Note 10 were used as devices capable of running the BLE Simulator application and advertising configurable iBeacon payloads. The Ulefone Armor 22 was used as the scanner and detector device running the custom thesis application OIPASFT. In some tests, only one smartphone was used at a time as a simulated BLE beacon. In other tests, the setup combined physical BLE beacons and smartphones running the BLE Simulator software.
 
 ## Implementation Overview
 
-The application is implemented as a single Android activity using Jetpack Compose for the user interface. The BLE advertising functionality is provided by Android's `BluetoothLeAdvertiser` API. When the user starts advertising, the application validates the entered beacon parameters, checks Bluetooth capability and permission state, constructs the iBeacon manufacturer payload, and submits a non-connectable BLE advertisement request.
+The application is implemented as a single Android activity using Jetpack Compose for the user interface. The BLE advertising functionality is provided by Android's `BluetoothLeAdvertiser` API. When the user starts advertising, the application validates the entered beacon parameters, checks Bluetooth capability and permission state, constructs the iBeacon manufacturer payload, and submits a BLE advertisement request that is not connectable.
 
-The simulator is designed for foreground experimental use. Advertising is stopped when the user presses the stop control or when the activity is destroyed. This behaviour makes the advertising period explicit and easier to correlate with experimental logs.
+The simulator is designed for foreground experimental use. Advertising stops when the user presses the stop control or when the activity is destroyed. This behaviour makes the advertising period explicit and easier to correlate with experimental logs.
 
 ## iBeacon Data Model
 
-The transmitted iBeacon payload contains:
+The transmitted iBeacon payload contains the following fields.
 
-- A fixed iBeacon prefix.
-- The proximity UUID.
-- The major value.
-- The minor value.
-- The measured power value.
+1. Fixed iBeacon prefix.
+2. Proximity UUID.
+3. Major value.
+4. Minor value.
+5. Measured power value.
 
-The application also exposes a **Beacon ID** field. This field is used for human-readable identification in the interface and in Logcat, but it is not part of the standard iBeacon advertisement frame. Therefore, external BLE scanners should verify the simulated beacon through UUID, major, minor, and measured power.
+The application also exposes a Beacon ID field. This field is used as a local human readable label in the interface and in Logcat, but it is not a transmitted iBeacon field. External scanners should therefore verify the simulated beacon through UUID, major, minor, and measured power.
 
-Current sample defaults:
+Sample defaults:
 
 ```text
 Beacon ID: SamA15
@@ -33,11 +41,21 @@ Measured power: -80
 TX power level: 3
 ```
 
-These values should be treated as configurable experimental parameters rather than fixed system constants.
+These values are configurable experimental parameters and may be changed for each device or test session.
+
+## Experimental Devices
+
+The following Android devices were involved in thesis experimentation.
+
+1. Samsung Galaxy A15: beacon advertiser running the BLE Simulator application, Android 14.
+2. Xiaomi Redmi Note 10: beacon advertiser running the BLE Simulator application, Android 13.
+3. Ulefone Armor 22: scanner and detector running OIPASFT, Android 13.
+
+The devices were not always used in the same configuration. In some tests, one smartphone running the BLE Simulator was used as the simulated beacon. In other tests, smartphones running the BLE Simulator were used together with physical BLE beacons. The Ulefone Armor 22 was used as the scanner and detector device.
 
 ## Logcat Instrumentation
 
-The application records operational events under the following Logcat tag:
+The application records operational events under the following Logcat tag.
 
 ```text
 BLEBeaconSimulator
@@ -49,23 +67,23 @@ Recommended observation command:
 adb logcat -s BLEBeaconSimulator
 ```
 
-The logging strategy supports experimental traceability by recording:
+The logging strategy supports experimental traceability by recording the following events.
 
-- Activity creation and destruction.
-- User requests to start or stop advertising.
-- Runtime Bluetooth permission results.
-- Invalid configuration values.
-- Bluetooth adapter availability and state.
-- BLE advertising capability checks.
-- Advertisement start success.
-- Advertisement start failure with Android error-code interpretation.
-- Advertisement shutdown.
+1. Activity creation and destruction.
+2. Start and stop advertising requests.
+3. Runtime Bluetooth permission results.
+4. Invalid configuration values.
+5. Bluetooth adapter availability and state.
+6. BLE advertising capability checks.
+7. Advertisement start success.
+8. Advertisement start failure with Android error code interpretation.
+9. Advertisement shutdown.
 
-No signing credentials, passwords, or private keystore information are logged.
+No signing credentials, passwords, private keystore information, or sensitive secrets should be logged.
 
 ## Expected Successful Log Sequence
 
-A typical successful session should contain entries similar to:
+A typical successful session should contain entries similar to the following example.
 
 ```text
 I/BLEBeaconSimulator: Activity created for BLE beacon simulation.
@@ -109,18 +127,20 @@ E/BLEBeaconSimulator: Advertising failed with code <code> (<interpreted reason>)
 
 ## Reproducibility Notes
 
-For reproducible measurements, the following information should be recorded for each session:
+For reproducible measurements, the following information should be recorded.
 
-- Android device model used as the simulator.
-- Android version.
-- Beacon ID.
-- UUID, major, minor, measured power, and TX power level.
-- Approximate physical placement of the simulator device.
-- BLE scanner application and scanner device model.
-- Logcat output for the advertising session.
+1. Date of experiment.
+2. Advertising device used: Samsung Galaxy A15 or Xiaomi Redmi Note 10.
+3. Android version of the advertising device: Android 14 for Samsung Galaxy A15 or Android 13 for Xiaomi Redmi Note 10.
+4. Scanner and detector device: Ulefone Armor 22.
+5. Android version of the scanner and detector device: Android 13.
+6. Beacon ID.
+7. UUID, major, minor, measured power, and TX power level.
+8. Whether physical BLE beacons were also used in the test.
+9. Approximate physical placement of the simulated beacon device.
+10. Logcat output for the advertising session.
+11. Scanner and detector evidence from OIPASFT.
 
-RSSI values observed by receivers are expected to vary because of device orientation, antenna placement, environmental interference, and multipath propagation. The simulator should therefore be treated as a practical experimental substitute for a beacon identity source rather than as a calibrated RF reference instrument.
+RSSI values observed by receivers are expected to vary because of device orientation, antenna placement, environmental interference, multipath propagation, and differences between device chipsets. For this reason, RSSI values collected with this helper tool should be interpreted as practical experimental observations from the tested smartphone setup, not as calibrated RF measurements. When RSSI is discussed in the thesis, it should be presented together with the device model, placement, environment, and scanner configuration used during the experiment.
 
-## Suggested Thesis Appendix Text
-
-The BLE beacon used in the experimental setup was simulated with a custom Android application running on a spare Android device. The application used Android's `BluetoothLeAdvertiser` API to emit a non-connectable iBeacon advertisement containing configurable UUID, major, minor, and measured-power values. A local beacon identifier was maintained in the application interface and Logcat output for documentation purposes; however, this identifier was not transmitted in the iBeacon payload. Experimental runs were monitored through Logcat using the tag `BLEBeaconSimulator`, which recorded permission state, configuration validation, Bluetooth capability checks, and advertising start or failure events.
+Repository level validation support files are provided in the `validation/` directory. These files are intended to store device information, validation notes, and real Logcat evidence without creating artificial test results.
